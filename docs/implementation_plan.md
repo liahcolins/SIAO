@@ -41,10 +41,15 @@ O **SIAO (Sistema Integrado de Apoio Operacional) / Mais Gestão** é um aplicat
 - Campos: Conta de Origem, Conta de Destino, Data, Valor (R$), Finalidade.
 - **Aviso Ostensivo:** Banner permanente destacando *"Registro gerencial no SIAO - Não realiza transferência bancária real"*.
 
-### 3.5 Fluxo de Validação Documental pelo Administrador
+### 3.5 Diferenciação Conceitual: Receita (Ingresso) vs. Transferência Gerencial
+- **Receita (Ingresso de Recursos - Etapa 2):** Representa a **entrada de novos recursos financeiros na OSC vindo do meio externo** (ex: repasses de termos de fomento, doações de parceiros, mensalidades de associados ou eventos/bazares). **Aumenta o patrimônio/saldo total da organização** e exige vínculo obrigatório com uma Fonte de Recursos.
+- **Transferência Gerencial (Movimentação Interna - Etapa 1):** Representa o **remanejamento interno de saldos que a OSC já possui** entre suas contas de custódia (ex: transferência da Conta Bancária do Convênio para o Caixa Interno em Espécie/Fundo Fixo para despesas miúdas). **NÃO altera o saldo total da organização**, apenas altera a localização de custódia do recurso.
+- **Premissa Geral:** Ambos os módulos são exclusivamente para escrituração gerencial e prestação de contas (o SIAO não realiza PIX nem movimentações bancárias reais).
+
+### 3.6 Fluxo de Validação Documental pelo Administrador
 - **Status do Lançamento:** `PENDENTE` → Análise pelo Administrador → `APROVADO` (entra na prestação de contas) ou `REJEITADO` (pendente de correção com motivo).
 
-### 3.6 Relatórios e Consultas por Competência
+### 3.7 Relatórios e Consultas por Competência
 - Filtros por **Modalidade** (Receita / Despesa) e por **Competência** (Mês-base de Janeiro a Dezembro + Ano).
 - Visão sintética com totais e visão detalhada que responde a 5 perguntas:
   1. *Qual lançamento ocorreu?*

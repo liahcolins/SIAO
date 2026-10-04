@@ -35,6 +35,10 @@ O **SIAO (Sistema Integrado de Apoio Operacional)** visa resolver o problema da 
   - Cumprimento de obrigações fiscais, trabalhistas e previdenciárias;
   - Sistemas oficiais de prestação de contas exigidos pelos concedentes.
 
+### 3.3 DISTINÇÃO CONCEITUAL: RECEITAS vs. TRANSFERÊNCIAS GERENCIAIS
+- **Receita (Ingresso de Recursos Externos):** Entrada de novos valores financeiros provenientes de entes externos (governo, convênios, doadores privados, associados, eventos). Aumenta o patrimônio total da OSC e deve obrigatoriamente se vincular a uma Fonte de Recursos.
+- **Transferência Gerencial (Movimentação Interna):** Deslocamento de saldos que a OSC já possui entre suas contas internas (ex.: Conta Bancária do Convênio → Caixa Interno em Espécie/Fundo Fixo). Não altera o saldo total da entidade.
+
 ---
 
 ## 4. Evolução do Protótipo Glide para Aplicativo Nativo

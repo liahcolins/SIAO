@@ -54,7 +54,7 @@ class AdminDashboardPage extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.account_circle_outlined),
-            onPressed: () => onNavigateTab(2), // Perfil Admin
+            onPressed: () => onNavigateTab(4), // Perfil Admin
             tooltip: 'Perfil Administrador',
           ),
         ],
@@ -267,7 +267,7 @@ class AdminDashboardPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(25),
                         ),
                       ),
-                      onPressed: () => onNavigateTab(1), // Aba de Transferências
+                      onPressed: () => onNavigateTab(3), // Aba de Transferências
                       icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.primaryTeal),
                       label: const Text(
                         'Novo Lançamento de Transferência',
@@ -297,18 +297,18 @@ class AdminDashboardPage extends StatelessWidget {
               title: 'Fornecedores / Fontes',
               subtitle: 'Quem fornece e quem financia o projeto',
               icon: Icons.people_alt_rounded,
-              badgeText: 'Etapa 2',
+              badgeText: 'Disponível',
               isPillStyle: true,
-              onTap: () => _showStepAlert(context, 'Etapa 2: Fornecedores e Fontes'),
+              onTap: () => onNavigateTab(2), // Cadastros Base
             ),
 
             TaskCard(
               title: 'Receitas',
               subtitle: 'Entradas, fonte pagadora, valor e data',
               icon: Icons.account_balance_wallet_rounded,
-              badgeText: 'Etapa 2',
+              badgeText: 'Disponível',
               isPillStyle: true,
-              onTap: () => _showStepAlert(context, 'Etapa 2: Receitas e Ingressos'),
+              onTap: () => onNavigateTab(1), // Receitas
             ),
 
             TaskCard(
