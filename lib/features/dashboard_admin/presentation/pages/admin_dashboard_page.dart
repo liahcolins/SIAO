@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../widgets/task_card.dart';
 
@@ -66,17 +67,36 @@ class AdminDashboardPage extends StatelessWidget {
           children: [
             const SizedBox(height: 8),
 
-            // Nome SIAO estilizado com fonte elegante e séria
-            Text(
-              'SIAO',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
-                fontSize: 34,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 2.5,
-                color: AppColors.primaryDarkTeal,
-              ),
+            // Nome SIAO com logos à esquerda e à direita
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Image.asset(
+                  AppAssets.logoUfmaSempreMais,
+                  height: 48,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'SIAO',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.outfit(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 2.5,
+                    color: AppColors.primaryDarkTeal,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Image.asset(
+                  AppAssets.logoMaisGestaoUfma,
+                  height: 48,
+                  fit: BoxFit.contain,
+                ),
+              ],
             ),
+
             const SizedBox(height: 2),
             Text(
               'Sistema de Apoio e Gestão Integrada para OSCs',
