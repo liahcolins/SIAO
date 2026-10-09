@@ -10,6 +10,7 @@ import 'features/dashboard_admin/presentation/pages/admin_dashboard_page.dart';
 import 'features/dashboard_admin/presentation/pages/admin_profile_page.dart';
 import 'features/receitas/presentation/pages/cadastro_receita_page.dart';
 import 'features/receitas/presentation/pages/lista_receitas_page.dart';
+import 'features/splash/presentation/pages/splash_page.dart';
 import 'features/transferencias/presentation/pages/cadastro_transferencia_page.dart';
 import 'features/transferencias/presentation/pages/lista_transferencias_page.dart';
 
@@ -38,7 +39,7 @@ class SIAOMaisGestaoApp extends StatelessWidget {
       supportedLocales: const [
         Locale('pt', 'BR'),
       ],
-      home: const MainNavigationScreen(),
+      home: const SplashScreen(),
     );
   }
 }
