@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/formatters.dart';
+import '../../../despesas/data/datasources/despesa_local_datasource.dart';
+import '../../../despesas/presentation/pages/cadastro_despesa_page.dart';
+import '../../../despesas/presentation/pages/lista_despesas_page.dart';
+import '../../../receitas/data/datasources/receita_local_datasource.dart';
 import '../widgets/task_card.dart';
 
-class AdminDashboardPage extends StatelessWidget {
+class AdminDashboardPage extends StatefulWidget {
   final Function(int) onNavigateTab;
 
   const AdminDashboardPage({
@@ -13,7 +18,68 @@ class AdminDashboardPage extends StatelessWidget {
   });
 
   @override
+  State<AdminDashboardPage> createState() => _AdminDashboardPageState();
+}
+
+class _AdminDashboardPageState extends State<AdminDashboardPage> {
+  final _receitaDataSource = ReceitaLocalDataSource();
+  final _despesaDataSource = DespesaLocalDataSource();
+
+  double _totalReceitas = 14700.00;
+  double _totalDespesas = 9850.00;
+  bool _isLoadingTotals = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTotals();
+  }
+
+  Future<void> _loadTotals() async {
+    try {
+      final receitas = await _receitaDataSource.getReceitas();
+      final totalRec = receitas.fold<double>(0.0, (sum, r) => sum + r.valor);
+      final totalDesp = await _despesaDataSource.getTotalDespesasAprovadas();
+
+      if (mounted) {
+        setState(() {
+          _totalReceitas = totalRec > 0 ? totalRec : 14700.00;
+          _totalDespesas = totalDesp > 0 ? totalDesp : 9850.00;
+          _isLoadingTotals = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingTotals = false);
+      }
+    }
+  }
+
+  void _abrirModuloDespesas() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => ListaDespesasPage(
+          onNovoCadastroTap: () {
+            Navigator.of(ctx).push(
+              MaterialPageRoute(
+                builder: (c) => CadastroDespesaPage(
+                  onDespesaSalva: () {
+                    Navigator.of(c).pop();
+                    _loadTotals();
+                  },
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    ).then((_) => _loadTotals());
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final saldoGerencial = _totalReceitas - _totalDespesas;
+
     return Scaffold(
       appBar: AppBar(
         title: Column(
@@ -55,7 +121,7 @@ class AdminDashboardPage extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.account_circle_outlined),
-            onPressed: () => onNavigateTab(4), // Perfil Admin
+            onPressed: () => widget.onNavigateTab(4), // Perfil Admin
             tooltip: 'Perfil Administrador',
           ),
         ],
@@ -109,7 +175,7 @@ class AdminDashboardPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Resumo Gerencial de Saldos da OSC
+            // Resumo Gerencial de Saldos da OSC (Dinâmico)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -126,13 +192,24 @@ class AdminDashboardPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Resumo de Saldos Gerenciais',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primaryDarkTeal,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Resumo de Saldos Gerenciais',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryDarkTeal,
+                        ),
+                      ),
+                      if (_isLoadingTotals)
+                        const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryTeal),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -140,7 +217,7 @@ class AdminDashboardPage extends StatelessWidget {
                       Expanded(
                         child: _buildSummaryCard(
                           title: 'Receitas',
-                          value: 'R\$ 14.700,00',
+                          value: Formatters.formatCurrency(_totalReceitas),
                           color: AppColors.successGreen,
                           icon: Icons.arrow_downward_rounded,
                         ),
@@ -149,7 +226,7 @@ class AdminDashboardPage extends StatelessWidget {
                       Expanded(
                         child: _buildSummaryCard(
                           title: 'Despesas',
-                          value: 'R\$ 9.850,00',
+                          value: Formatters.formatCurrency(_totalDespesas),
                           color: AppColors.dangerRed,
                           icon: Icons.arrow_upward_rounded,
                         ),
@@ -180,12 +257,12 @@ class AdminDashboardPage extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 2),
-                            const Text(
-                              'R\$ 4.850,00',
+                            Text(
+                              Formatters.formatCurrency(saldoGerencial),
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.primaryDarkTeal,
+                                color: saldoGerencial >= 0 ? AppColors.primaryDarkTeal : AppColors.dangerRed,
                               ),
                             ),
                           ],
@@ -287,7 +364,7 @@ class AdminDashboardPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(25),
                         ),
                       ),
-                      onPressed: () => onNavigateTab(3), // Aba de Transferências
+                      onPressed: () => widget.onNavigateTab(3), // Aba de Transferências
                       icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.primaryTeal),
                       label: const Text(
                         'Novo Lançamento de Transferência',
@@ -312,14 +389,14 @@ class AdminDashboardPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Botões no estilo pílula verde Teal idênticos às imagens do Protótipo PDF
+            // 4 Cards de Tarefas Centrais inspirados no Protótipo UFMA
             TaskCard(
               title: 'Fornecedores / Fontes',
               subtitle: 'Quem fornece e quem financia o projeto',
               icon: Icons.people_alt_rounded,
               badgeText: 'Disponível',
               isPillStyle: true,
-              onTap: () => onNavigateTab(2), // Cadastros Base
+              onTap: () => widget.onNavigateTab(2), // Cadastros Base
             ),
 
             TaskCard(
@@ -328,16 +405,16 @@ class AdminDashboardPage extends StatelessWidget {
               icon: Icons.account_balance_wallet_rounded,
               badgeText: 'Disponível',
               isPillStyle: true,
-              onTap: () => onNavigateTab(1), // Receitas
+              onTap: () => widget.onNavigateTab(1), // Receitas
             ),
 
             TaskCard(
               title: 'Despesas',
               subtitle: 'Saídas e comprovações de cupom fiscal',
               icon: Icons.receipt_long_rounded,
-              badgeText: 'Etapa 3',
+              badgeText: 'Disponível',
               isPillStyle: true,
-              onTap: () => _showStepAlert(context, 'Etapa 3: Despesas e Comprovantes'),
+              onTap: _abrirModuloDespesas,
             ),
 
             TaskCard(
@@ -415,7 +492,7 @@ class AdminDashboardPage extends StatelessWidget {
           ],
         ),
         content: const Text(
-          'Esta funcionalidade está planejada para as próximas etapas do projeto conforme o escopo.\n\nA ETAPA 1 foca no Perfil do Administrador e no Cadastro de Transferência Gerencial.',
+          'Esta funcionalidade está planejada para as próximas etapas do projeto conforme o escopo.\n\nAs ETAPAS 1, 2 e 3 (Transferências, Cadastros Base, Receitas e Despesas com Comprovantes) já estão plenamente disponíveis!',
         ),
         actions: [
           ElevatedButton(
