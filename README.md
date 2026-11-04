@@ -196,21 +196,14 @@ Prevista para contemplar:
 
 ---
 
-## Etapa 1 — Estado atual
+## Estado atual (Etapas 1 a 4 Concluídas)
 
-A primeira etapa prioriza o **perfil Administrador**, permitindo apresentar uma versão visual e funcional inicial do sistema.
+O aplicativo contempla atualmente as entregas das **Etapas 1, 2, 3 e 4**:
 
-Atualmente, a interface contempla:
-
-- identificação da organização;
-- identificação do perfil administrador;
-- dashboard;
-- resumo de receitas;
-- resumo de despesas;
-- saldo gerencial;
-- acesso ao cadastro de transferência gerencial;
-- acesso às áreas previstas para etapas posteriores;
-- navegação entre dashboard, transferências e perfil.
+- **Etapa 1 — Fundação & Transferências Gerenciais:** Dashboard gerencial, identidade visual institucional (UFMA / Mais Gestão), saldo gerencial dinâmico e registro de transferências gerenciais internas com aviso ostensivo de finalidade não bancária.
+- **Etapa 2 — Cadastros Base & Receitas:** Cadastro de fornecedores (PF/PJ), fontes de recursos e lançamento de receitas com formas de recebimento (Cheque, PIX/Depósito informativo e Espécie).
+- **Etapa 3 — Despesas, Comprovantes & Validação:** Lançamento de despesas com vínculo obrigatório à fonte de recurso e documento comprobatório anexo (NF-e, NFS-e, NFC-e, Recibo), visualizador de comprovantes e esteira de validação do Administrador (`Pendente`, `Aprovado`, `Rejeitado`).
+- **Etapa 4 — Autenticação, Perfis RBAC & Solicitação de Acesso:** Controle de acesso baseado em papéis (**Administrador**, **Alimentador** e **Visualizador**), tela de login e alternância rápida de perfil para homologação, formulário de solicitação de acesso à OSC e fila de aprovação/deliberação de usuários pelo Administrador.
 
 A transferência registrada pelo sistema representa uma **movimentação gerencial interna**, não uma transferência bancária real.
 
