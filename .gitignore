@@ -89,6 +89,3 @@ app.*.map.json
 # Widget Preview related
 .widget_preview/
 
-# Local processing tools (ignored from git)
-logo_processor/
-
