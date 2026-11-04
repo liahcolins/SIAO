@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/bank_warning_banner.dart';
+import '../../../usuarios_acesso/data/datasources/usuario_local_datasource.dart';
 import '../../data/datasources/receita_local_datasource.dart';
 import '../../data/models/receita_model.dart';
 
@@ -46,15 +47,23 @@ class _ListaReceitasPageState extends State<ListaReceitasPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primaryTeal,
-        foregroundColor: Colors.white,
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        onPressed: widget.onNovoCadastroTap,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Nova Receita', style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
+      floatingActionButton:
+          UsuarioLocalDataSource.usuarioAtual.podeRealizarLancamentos
+              ? FloatingActionButton.extended(
+                  backgroundColor: AppColors.primaryTeal,
+                  foregroundColor: Colors.white,
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  onPressed: widget.onNovoCadastroTap,
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text(
+                    'Nova Receita',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                )
+              : null,
       body: FutureBuilder<List<ReceitaModel>>(
         future: _futureList,
         builder: (context, snapshot) {

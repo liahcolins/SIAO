@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../usuarios_acesso/data/datasources/usuario_local_datasource.dart';
 import '../../data/datasources/transferencia_local_datasource.dart';
 import '../../data/models/transferencia_model.dart';
 
@@ -46,15 +47,23 @@ class _ListaTransferenciasPageState extends State<ListaTransferenciasPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primaryTeal,
-        foregroundColor: Colors.white,
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        onPressed: widget.onNovoCadastroTap,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Nova Transferência', style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
+      floatingActionButton:
+          UsuarioLocalDataSource.usuarioAtual.podeValidarEAprovar
+              ? FloatingActionButton.extended(
+                  backgroundColor: AppColors.primaryTeal,
+                  foregroundColor: Colors.white,
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  onPressed: widget.onNovoCadastroTap,
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text(
+                    'Nova Transferência',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                )
+              : null,
       body: FutureBuilder<List<TransferenciaModel>>(
         future: _futureList,
         builder: (context, snapshot) {
@@ -77,7 +86,11 @@ class _ListaTransferenciasPageState extends State<ListaTransferenciasPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.inbox_outlined,
+                    size: 64,
+                    color: Colors.grey.shade400,
+                  ),
                   const SizedBox(height: 16),
                   const Text(
                     'Nenhuma transferência cadastrada ainda.',
@@ -151,7 +164,10 @@ class _ListaTransferenciasPageState extends State<ListaTransferenciasPage> {
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: isAprovado
                         ? AppColors.successGreen.withValues(alpha: 0.12)
@@ -163,7 +179,9 @@ class _ListaTransferenciasPageState extends State<ListaTransferenciasPage> {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: isAprovado ? AppColors.successGreen : AppColors.accentOrange,
+                      color: isAprovado
+                          ? AppColors.successGreen
+                          : AppColors.accentOrange,
                     ),
                   ),
                 ),
@@ -173,7 +191,11 @@ class _ListaTransferenciasPageState extends State<ListaTransferenciasPage> {
 
             Row(
               children: [
-                const Icon(Icons.arrow_upward_rounded, size: 14, color: AppColors.dangerRed),
+                const Icon(
+                  Icons.arrow_upward_rounded,
+                  size: 14,
+                  color: AppColors.dangerRed,
+                ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -187,7 +209,11 @@ class _ListaTransferenciasPageState extends State<ListaTransferenciasPage> {
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.arrow_downward_rounded, size: 14, color: AppColors.successGreen),
+                const Icon(
+                  Icons.arrow_downward_rounded,
+                  size: 14,
+                  color: AppColors.successGreen,
+                ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -206,7 +232,10 @@ class _ListaTransferenciasPageState extends State<ListaTransferenciasPage> {
                 Flexible(
                   child: Text(
                     item.finalidade,
-                    style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/bank_warning_banner.dart';
+import '../../../usuarios_acesso/data/datasources/usuario_local_datasource.dart';
 import '../../data/datasources/despesa_local_datasource.dart';
 import '../../data/models/despesa_model.dart';
 import '../widgets/comprovante_viewer_dialog.dart';
@@ -74,15 +75,23 @@ class _ListaDespesasPageState extends State<ListaDespesasPage>
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primaryTeal,
-        foregroundColor: Colors.white,
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        onPressed: widget.onNovoCadastroTap,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Nova Despesa', style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
+      floatingActionButton:
+          UsuarioLocalDataSource.usuarioAtual.podeRealizarLancamentos
+              ? FloatingActionButton.extended(
+                  backgroundColor: AppColors.primaryTeal,
+                  foregroundColor: Colors.white,
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  onPressed: widget.onNovoCadastroTap,
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text(
+                    'Nova Despesa',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                )
+              : null,
       body: FutureBuilder<List<DespesaModel>>(
         future: _futureList,
         builder: (context, snapshot) {
@@ -425,30 +434,62 @@ class _ListaDespesasPageState extends State<ListaDespesasPage>
                   ),
                 ),
                 const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: despesa.isPendente ? const Color(0xFFD97706) : AppColors.primaryDarkTeal,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                if (UsuarioLocalDataSource.usuarioAtual.podeValidarEAprovar)
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: despesa.isPendente
+                          ? const Color(0xFFD97706)
+                          : AppColors.primaryDarkTeal,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () {
+                      ValidacaoDespesaBottomSheet.show(
+                        context: context,
+                        despesa: despesa,
+                        onStatusAlterado: _refreshList,
+                      );
+                    },
+                    icon: Icon(
+                      despesa.isPendente
+                          ? Icons.fact_check_rounded
+                          : Icons.edit_note_rounded,
+                      size: 16,
+                    ),
+                    label: Text(
+                      despesa.isPendente ? 'Validar Gasto' : 'Gerenciar',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Validação: Perfil Admin',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                  onPressed: () {
-                    ValidacaoDespesaBottomSheet.show(
-                      context: context,
-                      despesa: despesa,
-                      onStatusAlterado: _refreshList,
-                    );
-                  },
-                  icon: Icon(
-                    despesa.isPendente ? Icons.fact_check_rounded : Icons.edit_note_rounded,
-                    size: 16,
-                  ),
-                  label: Text(
-                    despesa.isPendente ? 'Validar Gasto' : 'Gerenciar',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                ),
               ],
             ),
           ],

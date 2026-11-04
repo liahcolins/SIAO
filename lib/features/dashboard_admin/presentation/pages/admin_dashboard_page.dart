@@ -7,6 +7,9 @@ import '../../../despesas/data/datasources/despesa_local_datasource.dart';
 import '../../../despesas/presentation/pages/cadastro_despesa_page.dart';
 import '../../../despesas/presentation/pages/lista_despesas_page.dart';
 import '../../../receitas/data/datasources/receita_local_datasource.dart';
+import '../../../usuarios_acesso/data/datasources/usuario_local_datasource.dart';
+import '../../../usuarios_acesso/data/models/usuario_model.dart';
+import '../../../usuarios_acesso/presentation/pages/gestao_usuarios_rbac_page.dart';
 import '../widgets/task_card.dart';
 
 class AdminDashboardPage extends StatefulWidget {
@@ -24,9 +27,11 @@ class AdminDashboardPage extends StatefulWidget {
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
   final _receitaDataSource = ReceitaLocalDataSource();
   final _despesaDataSource = DespesaLocalDataSource();
+  final _usuarioDataSource = UsuarioLocalDataSource();
 
   double _totalReceitas = 14700.00;
   double _totalDespesas = 9850.00;
+  int _solicitacoesPendentes = 0;
   bool _isLoadingTotals = true;
 
   @override
@@ -40,11 +45,14 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       final receitas = await _receitaDataSource.getReceitas();
       final totalRec = receitas.fold<double>(0.0, (sum, r) => sum + r.valor);
       final totalDesp = await _despesaDataSource.getTotalDespesasAprovadas();
+      final qtdPendUsuarios =
+          await _usuarioDataSource.getQuantidadeSolicitacoesPendentes();
 
       if (mounted) {
         setState(() {
           _totalReceitas = totalRec > 0 ? totalRec : 14700.00;
           _totalDespesas = totalDesp > 0 ? totalDesp : 9850.00;
+          _solicitacoesPendentes = qtdPendUsuarios;
           _isLoadingTotals = false;
         });
       }
@@ -56,378 +64,440 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   void _abrirModuloDespesas() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (ctx) => ListaDespesasPage(
-          onNovoCadastroTap: () {
-            Navigator.of(ctx).push(
-              MaterialPageRoute(
-                builder: (c) => CadastroDespesaPage(
-                  onDespesaSalva: () {
-                    Navigator.of(c).pop();
-                    _loadTotals();
-                  },
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    ).then((_) => _loadTotals());
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (ctx) => ListaDespesasPage(
+              onNovoCadastroTap: () {
+                Navigator.of(ctx).push(
+                  MaterialPageRoute(
+                    builder: (c) => CadastroDespesaPage(
+                      onDespesaSalva: () {
+                        Navigator.of(c).pop();
+                        _loadTotals();
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        )
+        .then((_) => _loadTotals());
+  }
+
+  void _abrirModuloUsuariosRbac() {
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => const GestaoUsuariosRbacPage(),
+          ),
+        )
+        .then((_) => _loadTotals());
   }
 
   @override
   Widget build(BuildContext context) {
     final saldoGerencial = _totalReceitas - _totalDespesas;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    return ValueListenableBuilder<UsuarioModel>(
+      valueListenable: UsuarioLocalDataSource.usuarioAtualNotifier,
+      builder: (context, usuario, _) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'SIAO • Mais Gestão',
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Text(
-                    'ADMIN',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        'SIAO • Mais Gestão',
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
                     ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        usuario.perfilBadge,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  '${usuario.nome} • ${usuario.organizacaoNome}',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.normal,
+                    color: Colors.white70,
                   ),
                 ),
               ],
             ),
-            const Text(
-              'Associação Comunidade Viva • CNPJ 12.345.678/0001-90',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.normal, color: Colors.white70),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.account_circle_outlined),
-            onPressed: () => widget.onNavigateTab(4), // Perfil Admin
-            tooltip: 'Perfil Administrador',
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.manage_accounts_outlined),
+                onPressed: _abrirModuloUsuariosRbac,
+                tooltip: 'Usuários & Permissões (RBAC)',
+              ),
+              IconButton(
+                icon: const Icon(Icons.account_circle_outlined),
+                onPressed: () => widget.onNavigateTab(4),
+                tooltip: 'Perfil & Controle de Acesso',
+              ),
+            ],
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(18.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 8),
-
-            // Nome SIAO com logos à esquerda e à direita
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(18.0),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Image.asset(
-                  AppAssets.logoUfmaSempreMais,
-                  height: 48,
-                  fit: BoxFit.contain,
+                const SizedBox(height: 8),
+
+                // Nome SIAO com logos à esquerda e à direita
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      AppAssets.logoUfmaSempreMais,
+                      height: 48,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'SIAO',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                        fontSize: 34,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 2.5,
+                        color: AppColors.primaryDarkTeal,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Image.asset(
+                      AppAssets.logoMaisGestaoUfma,
+                      height: 48,
+                      fit: BoxFit.contain,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
+
+                const SizedBox(height: 2),
                 Text(
-                  'SIAO',
+                  'Sistema de Apoio e Gestão Integrada para OSCs',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
-                    fontSize: 34,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 2.5,
-                    color: AppColors.primaryDarkTeal,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondaryLight,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Image.asset(
-                  AppAssets.logoMaisGestaoUfma,
-                  height: 48,
-                  fit: BoxFit.contain,
+                const SizedBox(height: 20),
+
+                // Resumo Gerencial de Saldos da OSC (Dinâmico)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Resumo de Saldos Gerenciais',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryDarkTeal,
+                            ),
+                          ),
+                          if (_isLoadingTotals)
+                            const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.primaryTeal,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildSummaryCard(
+                              title: 'Receitas',
+                              value: Formatters.formatCurrency(_totalReceitas),
+                              color: AppColors.successGreen,
+                              icon: Icons.arrow_downward_rounded,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildSummaryCard(
+                              title: 'Despesas',
+                              value: Formatters.formatCurrency(_totalDespesas),
+                              color: AppColors.dangerRed,
+                              icon: Icons.arrow_upward_rounded,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLightTeal,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.primaryTeal.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Saldo Gerencial em Caixa',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.primaryDarkTeal
+                                        .withValues(alpha: 0.8),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  Formatters.formatCurrency(saldoGerencial),
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: saldoGerencial >= 0
+                                        ? AppColors.primaryDarkTeal
+                                        : AppColors.dangerRed,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryTeal,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.account_balance_wallet_rounded,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Card de Destaque da ETAPA 1 em Estilo Teal Elegante
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryTeal,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryTeal.withValues(alpha: 0.25),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.swap_horiz_rounded,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'ETAPA 1 • AÇÃO DO ADMINISTRADOR',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                Text(
+                                  'Cadastro de Transferência Gerencial',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Registre movimentações internas de saldos entre contas bancárias vinculadas e caixa interno da OSC.',
+                        style: TextStyle(color: Colors.white70, fontSize: 12.5),
+                      ),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: AppColors.primaryTeal,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                          ),
+                          onPressed: () => widget.onNavigateTab(3),
+                          icon: Icon(
+                            usuario.isAdministrador
+                                ? Icons.add_circle_outline_rounded
+                                : Icons.visibility_outlined,
+                            color: AppColors.primaryTeal,
+                          ),
+                          label: Text(
+                            usuario.isAdministrador
+                                ? 'Novo Lançamento de Transferência'
+                                : 'Consultar Transferências Gerenciais',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 28),
+
+                // Subtítulo do Protótipo UFMA
+                const Text(
+                  'Cadastros, Lançamentos e Relatórios:',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSecondaryLight,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Cards de Tarefas Centrais inspirados no Protótipo UFMA
+                TaskCard(
+                  title: 'Fornecedores / Fontes',
+                  subtitle: 'Quem fornece e quem financia o projeto',
+                  icon: Icons.people_alt_rounded,
+                  badgeText: 'Disponível',
+                  isPillStyle: true,
+                  onTap: () => widget.onNavigateTab(2),
+                ),
+
+                TaskCard(
+                  title: 'Receitas',
+                  subtitle: 'Entradas, fonte pagadora, valor e data',
+                  icon: Icons.account_balance_wallet_rounded,
+                  badgeText: 'Disponível',
+                  isPillStyle: true,
+                  onTap: () => widget.onNavigateTab(1),
+                ),
+
+                TaskCard(
+                  title: 'Despesas',
+                  subtitle: 'Saídas e comprovações de cupom fiscal',
+                  icon: Icons.receipt_long_rounded,
+                  badgeText: 'Disponível',
+                  isPillStyle: true,
+                  onTap: _abrirModuloDespesas,
+                ),
+
+                TaskCard(
+                  title: 'Usuários & Permissões',
+                  subtitle: 'Perfis RBAC e aprovação de solicitações',
+                  icon: Icons.admin_panel_settings_rounded,
+                  badgeText: _solicitacoesPendentes > 0
+                      ? '$_solicitacoesPendentes Pendentes'
+                      : 'Disponível',
+                  isPillStyle: true,
+                  onTap: _abrirModuloUsuariosRbac,
+                ),
+
+                TaskCard(
+                  title: 'Relatórios',
+                  subtitle: 'Síntese de receitas e despesas',
+                  icon: Icons.assessment_rounded,
+                  badgeText: 'Etapa 5',
+                  isPillStyle: true,
+                  onTap: () => _showStepAlert(
+                    context,
+                    'Etapa 5: Relatórios por Competência',
+                  ),
                 ),
               ],
             ),
-
-            const SizedBox(height: 2),
-            Text(
-              'Sistema de Apoio e Gestão Integrada para OSCs',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondaryLight,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Resumo Gerencial de Saldos da OSC (Dinâmico)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Resumo de Saldos Gerenciais',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primaryDarkTeal,
-                        ),
-                      ),
-                      if (_isLoadingTotals)
-                        const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryTeal),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryCard(
-                          title: 'Receitas',
-                          value: Formatters.formatCurrency(_totalReceitas),
-                          color: AppColors.successGreen,
-                          icon: Icons.arrow_downward_rounded,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildSummaryCard(
-                          title: 'Despesas',
-                          value: Formatters.formatCurrency(_totalDespesas),
-                          color: AppColors.dangerRed,
-                          icon: Icons.arrow_upward_rounded,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLightTeal,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.primaryTeal.withValues(alpha: 0.2)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Saldo Gerencial em Caixa',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.primaryDarkTeal.withValues(alpha: 0.8),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              Formatters.formatCurrency(saldoGerencial),
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: saldoGerencial >= 0 ? AppColors.primaryDarkTeal : AppColors.dangerRed,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryTeal,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.account_balance_wallet_rounded,
-                            color: Colors.white,
-                            size: 22,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Card de Destaque da ETAPA 1 em Estilo Teal Elegante
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.primaryTeal,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primaryTeal.withValues(alpha: 0.25),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.swap_horiz_rounded,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'ETAPA 1 • AÇÃO DO ADMINISTRADOR',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            Text(
-                              'Cadastro de Transferência Gerencial',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Registre movimentações internas de saldos entre contas bancárias vinculadas e caixa interno da OSC.',
-                    style: TextStyle(color: Colors.white70, fontSize: 12.5),
-                  ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppColors.primaryTeal,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                      ),
-                      onPressed: () => widget.onNavigateTab(3), // Aba de Transferências
-                      icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.primaryTeal),
-                      label: const Text(
-                        'Novo Lançamento de Transferência',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 28),
-
-            // Subtítulo do Protótipo UFMA
-            const Text(
-              'Cadastros, Lançamentos e Relatórios:',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textSecondaryLight,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // 4 Cards de Tarefas Centrais inspirados no Protótipo UFMA
-            TaskCard(
-              title: 'Fornecedores / Fontes',
-              subtitle: 'Quem fornece e quem financia o projeto',
-              icon: Icons.people_alt_rounded,
-              badgeText: 'Disponível',
-              isPillStyle: true,
-              onTap: () => widget.onNavigateTab(2), // Cadastros Base
-            ),
-
-            TaskCard(
-              title: 'Receitas',
-              subtitle: 'Entradas, fonte pagadora, valor e data',
-              icon: Icons.account_balance_wallet_rounded,
-              badgeText: 'Disponível',
-              isPillStyle: true,
-              onTap: () => widget.onNavigateTab(1), // Receitas
-            ),
-
-            TaskCard(
-              title: 'Despesas',
-              subtitle: 'Saídas e comprovações de cupom fiscal',
-              icon: Icons.receipt_long_rounded,
-              badgeText: 'Disponível',
-              isPillStyle: true,
-              onTap: _abrirModuloDespesas,
-            ),
-
-            TaskCard(
-              title: 'Relatórios',
-              subtitle: 'Síntese de receitas e despesas',
-              icon: Icons.assessment_rounded,
-              badgeText: 'Etapa 5',
-              isPillStyle: true,
-              onTap: () => _showStepAlert(context, 'Etapa 5: Relatórios por Competência'),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -481,18 +551,24 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            const Icon(Icons.info_outline_rounded, color: AppColors.primaryTeal),
+            const Icon(
+              Icons.info_outline_rounded,
+              color: AppColors.primaryTeal,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 featureName,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
         ),
         content: const Text(
-          'Esta funcionalidade está planejada para as próximas etapas do projeto conforme o escopo.\n\nAs ETAPAS 1, 2 e 3 (Transferências, Cadastros Base, Receitas e Despesas com Comprovantes) já estão plenamente disponíveis!',
+          'Esta funcionalidade está planejada para as próximas etapas do projeto conforme o escopo.\n\nAs ETAPAS 1, 2, 3 e 4 (Transferências, Cadastros Base, Receitas, Despesas com Comprovantes e Controle de Usuários/RBAC) já estão plenamente disponíveis!',
         ),
         actions: [
           ElevatedButton(

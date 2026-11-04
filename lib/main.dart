@@ -13,10 +13,12 @@ import 'features/receitas/presentation/pages/lista_receitas_page.dart';
 import 'features/splash/presentation/pages/splash_page.dart';
 import 'features/transferencias/presentation/pages/cadastro_transferencia_page.dart';
 import 'features/transferencias/presentation/pages/lista_transferencias_page.dart';
+import 'features/usuarios_acesso/data/datasources/usuario_local_datasource.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
+  await UsuarioLocalDataSource().inicializarSessao();
   runApp(const SIAOMaisGestaoApp());
 }
 
@@ -168,7 +170,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_rounded),
-            label: 'Perfil Admin',
+            label: 'Perfil & RBAC',
           ),
         ],
       ),

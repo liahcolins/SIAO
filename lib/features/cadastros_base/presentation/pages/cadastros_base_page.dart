@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../usuarios_acesso/data/datasources/usuario_local_datasource.dart';
 import '../../data/datasources/cadastros_local_datasource.dart';
 import '../../data/models/fornecedor_model.dart';
 import '../../data/models/fonte_recurso_model.dart';
@@ -89,15 +90,23 @@ class _CadastrosBasePageState extends State<CadastrosBasePage>
 
   Widget _buildFornecedoresTab() {
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primaryTeal,
-        foregroundColor: Colors.white,
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        onPressed: widget.onNovoFornecedorTap,
-        icon: const Icon(Icons.person_add_alt_1_rounded),
-        label: const Text('Novo Fornecedor', style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
+      floatingActionButton:
+          UsuarioLocalDataSource.usuarioAtual.podeRealizarLancamentos
+              ? FloatingActionButton.extended(
+                  backgroundColor: AppColors.primaryTeal,
+                  foregroundColor: Colors.white,
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  onPressed: widget.onNovoFornecedorTap,
+                  icon: const Icon(Icons.person_add_alt_1_rounded),
+                  label: const Text(
+                    'Novo Fornecedor',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                )
+              : null,
       body: FutureBuilder<List<FornecedorModel>>(
         future: _futureFornecedores,
         builder: (context, snapshot) {
@@ -217,15 +226,23 @@ class _CadastrosBasePageState extends State<CadastrosBasePage>
 
   Widget _buildFontesTab() {
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primaryTeal,
-        foregroundColor: Colors.white,
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-        onPressed: widget.onNovaFonteTap,
-        icon: const Icon(Icons.add_home_work_rounded),
-        label: const Text('Nova Fonte', style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
+      floatingActionButton:
+          UsuarioLocalDataSource.usuarioAtual.podeRealizarLancamentos
+              ? FloatingActionButton.extended(
+                  backgroundColor: AppColors.primaryTeal,
+                  foregroundColor: Colors.white,
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  onPressed: widget.onNovaFonteTap,
+                  icon: const Icon(Icons.add_home_work_rounded),
+                  label: const Text(
+                    'Nova Fonte',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                )
+              : null,
       body: FutureBuilder<List<FonteRecursoModel>>(
         future: _futureFontes,
         builder: (context, snapshot) {
